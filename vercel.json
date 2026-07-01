@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "services": {
+    "frontend": {
+      "root": "frontend"
+    },
+    "backend": {
+      "root": "backend"
+    }
+  }
+}
