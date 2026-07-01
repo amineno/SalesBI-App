@@ -19,22 +19,27 @@ const insertAuditLog = async (executor, {
         device = result.device.type || 'desktop';
     }
 
-    await executor.query(
-        `INSERT INTO audit_logs 
-        (user_id, action, table_affected, data_snapshot, ip_address, user_agent, os, device, session_id) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-            userId, 
-            action, 
-            table, 
-            JSON.stringify(snapshot), 
-            ipAddress, 
-            userAgent ? userAgent.substring(0, 255) : null, 
-            os, 
-            device, 
-            sessionId
-        ]
-    );
+    try {
+        await executor.query(
+            `INSERT INTO audit_logs 
+            (user_id, action, table_affected, data_snapshot, ip_address, user_agent, os, device, session_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                userId, 
+                action, 
+                table, 
+                JSON.stringify(snapshot), 
+                ipAddress, 
+                userAgent ? userAgent.substring(0, 255) : null, 
+                os, 
+                device, 
+                sessionId
+            ]
+        );
+    } catch (err) {
+        // Silently skip if table is missing or other audit log issues
+        console.warn('Audit log insertion failed, skipping:', err.message);
+    }
 };
 
 module.exports = {
