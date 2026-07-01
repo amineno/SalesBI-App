@@ -7,9 +7,13 @@ const pool = mysql.createPool({
     user: env.dbUser,
     password: env.dbPassword,
     database: env.dbName,
+    port: env.dbPort || 3306,
     connectionLimit: 10,
     waitForConnections: true,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 const testConnection = async () => {
