@@ -78,9 +78,7 @@ exports.register = async (req, res) => {
             const hashedPassword = await bcrypt.hash(validated.password, 12);
 
             const [insertResult] = await connection.query(
-                `INSERT INTO users
-                (full_name, email, password, role_id, failed_login_attempts, email_verified, password_updated_at)
-                VALUES (?, ?, ?, ?, 0, FALSE, NOW())`,
+                `INSERT INTO users (full_name, email, password, role_id) VALUES (?, ?, ?, ?)`,
                 [validated.full_name, validated.email, hashedPassword, userRoleId]
             );
             await insertAuditLog(connection, {
@@ -137,7 +135,6 @@ exports.login = async (req, res) => {
 
         const user = users[0];
         const lockedUntil = user.locked_until ? new Date(user.locked_until) : null;
-
         if (lockedUntil && lockedUntil > new Date()) {
             return res.status(423).json({ error: 'Account temporarily locked. Try again later.' });
         }
@@ -145,24 +142,32 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            const nextAttempts = Number(user.failed_login_attempts || 0) + 1;
-            const shouldLock = nextAttempts >= env.maxLoginAttempts;
-            const lockUntil = shouldLock ? new Date(Date.now() + (env.accountLockMinutes * 60 * 1000)) : null;
+            try {
+                const nextAttempts = Number(user.failed_login_attempts || 0) + 1;
+                const shouldLock = nextAttempts >= env.maxLoginAttempts;
+                const lockUntil = shouldLock ? new Date(Date.now() + (env.accountLockMinutes * 60 * 1000)) : null;
 
-            await pool.query(
-                'UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?',
-                [shouldLock ? 0 : nextAttempts, lockUntil, user.id]
-            );
+                await pool.query(
+                    'UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?',
+                    [shouldLock ? 0 : nextAttempts, lockUntil, user.id]
+                );
+            } catch (sqerr) {
+                logger.warn('Failed to update security login attempts - probably missing columns');
+            }
 
             return res.status(401).json({
                 error: shouldLock ? 'Account locked due to repeated failed logins' : 'Invalid credentials'
             });
         }
 
-        await pool.query(
-            'UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = ?',
-            [user.id]
-        );
+        try {
+            await pool.query(
+                'UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = ?',
+                [user.id]
+            );
+        } catch (sqerr) {
+            logger.warn('Failed to reset security login attempts - probably missing columns');
+        }
 
         await insertAuditLog(pool, {
             userId: user.id,
