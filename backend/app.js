@@ -33,8 +33,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: env.clientUrl,
-    credentials: true
+    origin: env.nodeEnv === 'production' ? true : env.clientUrl,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use('/api/payments', paymentRoutes);
