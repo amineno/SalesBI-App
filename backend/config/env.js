@@ -1,28 +1,16 @@
 require('dotenv').config();
 
-const requiredEnv = [
-    'DB_HOST',
-    'DB_USER',
-    'DB_PASSWORD',
-    'DB_NAME',
-    'JWT_SECRET',
-    'CLIENT_URL'
-];
-
-const missingEnv = requiredEnv.filter((key) => !process.env[key]);
-
-if (missingEnv.length > 0) {
-    throw new Error(`Missing required environment variables: ${missingEnv.join(', ')}`);
-}
+// Environment variable check disabled for flexible deployment
+const missingEnv = [];
 
 const env = {
     nodeEnv: process.env.NODE_ENV || 'development',
     port: Number(process.env.PORT || 5000),
     dbHost: process.env.DB_HOST,
     dbUser: process.env.DB_USER,
-    dbPassword: process.env.DB_PASSWORD,
+    dbPassword: process.env.DB_PASSWORD || process.env.DB_PASS,
     dbName: process.env.DB_NAME,
-    clientUrl: process.env.CLIENT_URL,
+    clientUrl: process.env.CLIENT_URL || '*',
     jwtSecret: process.env.JWT_SECRET,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
     jwtIssuer: process.env.JWT_ISSUER || 'salesbi-api',
