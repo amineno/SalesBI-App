@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: sales_bi_db
+    restart: always
+    env_file:
+      - ./.env.development
+    environment:
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./data/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+
+  backend:
+    build: ./backend
+    container_name: sales_bi_api
+    restart: always
+    env_file:
+      - ./.env.development
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DB_HOST=${DATABASE_HOST}
+      - DB_USER=${DATABASE_USER}
+      - DB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_NAME=${DATABASE_NAME}
+      - CLIENT_URL=${CLIENT_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - RESET_TOKEN_EXPIRES_MINUTES=${RESET_TOKEN_EXPIRES_MINUTES}
+      - ACCOUNT_LOCK_MINUTES=${ACCOUNT_LOCK_MINUTES}
+      - MAX_LOGIN_ATTEMPTS=${MAX_LOGIN_ATTEMPTS}
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: sales_bi_web
+    env_file:
+      - ./.env.development
+    ports:
+      - '5173:5173'
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    depends_on:
+      - backend
