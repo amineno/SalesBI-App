@@ -189,8 +189,12 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: err.issues.map((issue) => issue.message).join(', ') });
         }
 
-        logger.error('Login failed', { error: err.message });
-        res.status(500).json({ error: 'Internal Server Error' });
+        logger.error('Login failed', { error: err.message, stack: err.stack });
+        res.status(500).json({ 
+            error: 'Internal Server Error', 
+            message: err.message,
+            stack: env.nodeEnv === 'production' ? undefined : err.stack 
+        });
     }
 };
 
