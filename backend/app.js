@@ -113,10 +113,15 @@ app.get('/api/diag', async (req, res) => {
         const cache = require('./utils/cache');
         const cacheStatus = cache.isEnabled ? 'CONNECTED' : 'DISABLED';
 
+        const [[adminUser]] = await pool.query('SELECT email FROM users WHERE email = ?', ['nouiouidev404@dev.com']);
+        const [allRoles] = await pool.query('SELECT * FROM roles');
+
         res.json({
             status: 'OK',
             database: env.dbName,
             cache: cacheStatus,
+            userCheck: adminUser ? 'FOUND' : 'NOT_FOUND',
+            roles: allRoles.map(r => r.name),
             tableCount: tableList.length,
             structure: details,
             timestamp: new Date().toISOString()
