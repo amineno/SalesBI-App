@@ -110,9 +110,13 @@ app.get('/api/diag', async (req, res) => {
             }));
         }
 
+        const cache = require('./utils/cache');
+        const cacheStatus = cache.isEnabled ? 'CONNECTED' : 'DISABLED';
+
         res.json({
             status: 'OK',
             database: env.dbName,
+            cache: cacheStatus,
             tableCount: tableList.length,
             structure: details,
             timestamp: new Date().toISOString()
