@@ -91,6 +91,26 @@ app.get('/health', (req, res) => {
     });
 });
 
+app.get('/api/diag', async (req, res) => {
+    try {
+        const [tables] = await pool.query('SHOW TABLES');
+        const tableList = tables.map(t => Object.values(t)[0]);
+        
+        res.json({
+            status: 'OK',
+            database: env.dbName,
+            tables: tableList,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'ERROR', 
+            message: error.message,
+            stack: env.nodeEnv === 'production' ? undefined : error.stack
+        });
+    }
+});
+
 app.get('/ready', async (req, res) => {
     try {
         const dbStatus = await pool.getDatabaseStatus();
@@ -113,13 +133,23 @@ app.get('/ready', async (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    logger.error('Unhandled application error', {
-        error: err.message,
-        stack: err.stack,
+    const errorDescription = {
+        error: 'Something went wrong!',
+        message: err.message,
         path: req.originalUrl,
         method: req.method
+    };
+
+    if (env.nodeEnv !== 'production') {
+        errorDescription.stack = err.stack;
+    }
+
+    logger.error('Unhandled application error', {
+        ...errorDescription,
+        stack: err.stack
     });
-    res.status(500).json({ error: 'Something went wrong!', message: err.message });
+    
+    res.status(500).json(errorDescription);
 });
 
 module.exports = app;

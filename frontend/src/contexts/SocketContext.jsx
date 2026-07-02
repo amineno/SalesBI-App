@@ -12,6 +12,12 @@ export const SocketProvider = ({ children }) => {
     const queryClient = useQueryClient();
 
     useEffect(() => {
+        // Disable socket on Vercel production as it's not supported
+        if (window.location.hostname.includes('vercel.app')) {
+            console.warn('Socket.IO is disabled on Vercel production to prevent connection errors.');
+            return;
+        }
+
         if (!user) {
             if (socket) {
                 socket.disconnect();
