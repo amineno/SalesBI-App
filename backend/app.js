@@ -22,7 +22,11 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 const path = require('path');
+const cache = require('./utils/cache');
 const app = express();
+
+// Initialize Services (Async)
+cache.init().catch(err => logger.error('Cache initialization failed', { error: err.message }));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
