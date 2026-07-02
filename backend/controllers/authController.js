@@ -142,9 +142,10 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
+            let shouldLock = false;
             try {
                 const nextAttempts = Number(user.failed_login_attempts || 0) + 1;
-                const shouldLock = nextAttempts >= env.maxLoginAttempts;
+                shouldLock = nextAttempts >= env.maxLoginAttempts;
                 const lockUntil = shouldLock ? new Date(Date.now() + (env.accountLockMinutes * 60 * 1000)) : null;
 
                 await pool.query(
