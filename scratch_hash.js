@@ -1,3 +1,3 @@
-const bcrypt = require('bcrypt');
-const password = 'Admin123/*';
-bcrypt.hash(password, 10).then(hash => console.log(hash));
+const bcrypt = require('bcryptjs');
+const hash = bcrypt.hashSync('Admin123!', 12);
+console.log(hash);

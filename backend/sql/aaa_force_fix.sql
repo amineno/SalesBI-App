@@ -1,17 +1,14 @@
--- AUDIT LOG REPAIR
+-- MASTER UNLOCK & RESET
 USE salesbi_db;
 
--- Remove the old camelCase column if it exists to avoid confusion
--- (Wrap in error-tolerant migration service)
-ALTER TABLE audit_logs DROP COLUMN userAgent;
-
--- Ensure the correct lowercase columns exist
-ALTER TABLE audit_logs ADD COLUMN user_agent VARCHAR(255);
-ALTER TABLE audit_logs ADD COLUMN os VARCHAR(50);
-ALTER TABLE audit_logs ADD COLUMN device VARCHAR(50);
-
--- Ensure user is unlocked again
+-- 1. Reset user: nouiouidev404@dev.com
+-- Password hash for 'Admin123!'
 UPDATE users 
-SET failed_login_attempts = 0, 
+SET password = '$2b$12$WDNZE1X47xMmfQKafQEqDenwTT33h7kBQwHCdURsIltKJZaYn2I32', 
+    failed_login_attempts = 0, 
     locked_until = NULL 
+WHERE email = 'nouiouidev404@dev.com';
+
+-- Ensure Admin role
+UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'Admin' LIMIT 1) 
 WHERE email = 'nouiouidev404@dev.com';
