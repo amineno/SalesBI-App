@@ -75,13 +75,29 @@ exports.register = async (req, res) => {
                 return { conflict: true };
             }
 
-            const userRoleId = await getRoleIdByName(connection, 'User');
+            // Get or create default tenant
+            let [tenants] = await connection.query('SELECT id FROM tenants LIMIT 1');
+            let tenantId;
+            if (tenants.length === 0) {
+                const [newT] = await connection.query('INSERT INTO tenants (name, status) VALUES (?, ?)', ['Default Company', 'active']);
+                tenantId = newT.insertId;
+            } else {
+                tenantId = tenants[0].id;
+            }
+
+            let userRoleId = await getRoleIdByName(connection, 'User');
+            if (!userRoleId) {
+                const [newR] = await connection.query('INSERT INTO roles (name) VALUES (?)', ['User']);
+                userRoleId = newR.insertId;
+            }
+
             const hashedPassword = await bcrypt.hash(validated.password, 12);
 
             const [insertResult] = await connection.query(
-                `INSERT INTO users (full_name, email, password, role_id) VALUES (?, ?, ?, ?)`,
-                [validated.full_name, validated.email, hashedPassword, userRoleId]
+                `INSERT INTO users (full_name, email, password, role_id, tenant_id) VALUES (?, ?, ?, ?, ?)`,
+                [validated.full_name, validated.email, hashedPassword, userRoleId, tenantId]
             );
+
             await insertAuditLog(connection, {
                 userId: insertResult.insertId,
                 action: 'REGISTER_USER',
@@ -93,9 +109,9 @@ exports.register = async (req, res) => {
 
             // Automatically create a customer record for the enterprise founder
             await connection.query(
-                `INSERT INTO customers (full_name, email, company, assigned_to) 
-                VALUES (?, ?, 'SalesBI Enterprise', ?)`,
-                [validated.full_name, validated.email, insertResult.insertId]
+                `INSERT INTO customers (full_name, email, company, assigned_to, tenant_id) 
+                VALUES (?, ?, 'SalesBI Enterprise', ?, ?)`,
+                [validated.full_name, validated.email, insertResult.insertId, tenantId]
             );
 
             return { userId: insertResult.insertId };
@@ -105,11 +121,11 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Send Welcome Email (Non-blocking)
+        // Send Welcome Email (Try/Catch to prevent 500)
         try {
             await emailService.sendWelcomeEmail({ full_name: validated.full_name, email: validated.email, id: result.userId });
         } catch (emailErr) {
-            logger.warn('Welcome email failed to send, but registration succeeded', { userId: result.userId, error: emailErr.message });
+            logger.warn('Email service failed, but registration succeeded');
         }
 
         res.status(201).json({ message: 'User registered successfully', userId: result.userId });
