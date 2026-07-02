@@ -122,6 +122,7 @@ app.get('/api/diag', async (req, res) => {
             cache: cacheStatus,
             userCheck: adminUser ? 'FOUND' : 'NOT_FOUND',
             roles: allRoles.map(r => r.name),
+            apiPaths: ['/api/auth/login', '/api/products', '/api/diag'],
             tableCount: tableList.length,
             structure: details,
             timestamp: new Date().toISOString()
