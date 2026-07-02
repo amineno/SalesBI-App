@@ -91,6 +91,8 @@ app.get('/health', (req, res) => {
     });
 });
 
+const migrationService = require('./services/migrationService');
+
 app.get('/api/diag', async (req, res) => {
     try {
         const [tables] = await pool.query('SHOW TABLES');
@@ -107,6 +109,22 @@ app.get('/api/diag', async (req, res) => {
             status: 'ERROR', 
             message: error.message,
             stack: env.nodeEnv === 'production' ? undefined : error.stack
+        });
+    }
+});
+
+app.get('/api/admin/migrate-all', async (req, res) => {
+    try {
+        const results = await migrationService.runAll();
+        res.json({ 
+            message: 'Migration process finished', 
+            results,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'ERROR', 
+            message: error.message 
         });
     }
 });
