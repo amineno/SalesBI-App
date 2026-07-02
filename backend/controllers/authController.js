@@ -10,9 +10,10 @@ const logger = require('../utils/logger');
 const emailService = require('../services/emailService');
 
 const passwordSchema = z.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(10, 'Password must be at least 10 characters')
     .regex(/[A-Z]/, 'Include an uppercase letter')
-    .regex(/[0-9]/, 'Include a number');
+    .regex(/[0-9]/, 'Include a number')
+    .regex(/[^A-Za-z0-9]/, 'Include a symbol');
 
 const registerSchema = z.object({
     full_name: z.string().min(2),
@@ -104,8 +105,12 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Send Welcome Email
-        await emailService.sendWelcomeEmail({ full_name: validated.full_name, email: validated.email, id: result.userId });
+        // Send Welcome Email (Non-blocking)
+        try {
+            await emailService.sendWelcomeEmail({ full_name: validated.full_name, email: validated.email, id: result.userId });
+        } catch (emailErr) {
+            logger.warn('Welcome email failed to send, but registration succeeded', { userId: result.userId, error: emailErr.message });
+        }
 
         res.status(201).json({ message: 'User registered successfully', userId: result.userId });
     } catch (err) {
