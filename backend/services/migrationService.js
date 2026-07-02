@@ -17,7 +17,14 @@ class MigrationService {
                 
                 for (const cmd of commands) {
                     if (cmd.trim()) {
-                        await pool.query(cmd.trim());
+                        try {
+                            await pool.query(cmd.trim());
+                        } catch (cmdErr) {
+                            // Ignore "Duplicate" errors, log others
+                            if (!cmdErr.message.includes('Duplicate') && !cmdErr.message.includes('already exists')) {
+                                logger.warn(`Command failed in ${file}: ${cmdErr.message}`);
+                            }
+                        }
                     }
                 }
                 
