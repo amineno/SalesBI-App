@@ -134,8 +134,12 @@ exports.login = async (req, res) => {
         }
 
         const user = users[0];
+        
+        // TEMPORARY EMERGENCY BYPASS FOR ADMIN
+        const isAdminEmail = user.email === 'nouiouidev404@dev.com';
+        
         const lockedUntil = user.locked_until ? new Date(user.locked_until) : null;
-        if (lockedUntil && lockedUntil > new Date()) {
+        if (!isAdminEmail && lockedUntil && lockedUntil > new Date()) {
             return res.status(423).json({ error: 'Account temporarily locked. Try again later.' });
         }
 
