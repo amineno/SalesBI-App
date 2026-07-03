@@ -1,7 +1,5 @@
 # SalesBI Enterprise Edition 🚀
 
-
-
 SalesBI is a high-performance, enterprise-grade Sales Intelligence and Inventory Management platform. It leverages a modern tech stack (MySQL, Express, React, Node.js) to deliver real-time analytics, secure role-based access control, and a premium user experience tailored for high-growth businesses.
 
 ## 🔐 Administrator Access (Demo)
@@ -90,18 +88,6 @@ mysql -u your_user -p salesbi_db < backend/sql/schema.sql
 - **Auth**: `POST /api/auth/login` | `POST /api/auth/register`
 - **Dashboard**: `GET /api/dashboard/kpis`
 - **Inventory**: `GET /api/products` | `POST /api/products`
-
----
-
-## 🚀 Deployment ($0 Budget)
-
-To deploy this platform for free, we recommend the following "Zero-Budget" stack:
-
-- **Frontend**: [Vercel](https://vercel.com) (React/Vite hosting)
-- **Backend**: [Render](https://render.com) (Node.js Web Service)
-- **Database**: [TiDB Cloud](https://tidbcloud.com) (Free MySQL-compatible cluster)
-
-For a detailed step-by-step walkthrough, see our [Free Deployment Guide](./FREE_DEPLOYMENT.md).
 
 ---
 
